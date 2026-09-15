@@ -1,7 +1,21 @@
-import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle2, Github, Globe2, List, Mail, MapPin, Phone, X } from 'lucide-react';
-import { type Article, type Locale, resumes } from './data/resume';
-import { TicketFlowDiagram } from './components/TicketFlowDiagram';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Github, Globe2, List, Mail, MapPin, Phone, X } from 'lucide-react';
+import { type Locale, resumes } from './data/resume';
+
+const OverbookingDashboard = lazy(() =>
+  import('./components/oversell-dashboard/OverbookingDashboard').then((module) => ({
+    default: module.OverbookingDashboard,
+  })),
+);
+
+const SKILL_GROUP_COLORS = [
+  'border-blue-200 bg-blue-50 text-blue-700',
+  'border-violet-200 bg-violet-50 text-violet-700',
+  'border-amber-200 bg-amber-50 text-amber-700',
+  'border-cyan-200 bg-cyan-50 text-cyan-700',
+  'border-rose-200 bg-rose-50 text-rose-700',
+  'border-slate-200 bg-slate-50 text-slate-700',
+];
 
 type RouteState = {
   locale: Locale;
@@ -24,89 +38,6 @@ function parseRoute(): RouteState {
   const articleSlug = parts[1] === 'articles' && parts[2] ? parts[2] : null;
 
   return { locale, articleSlug };
-}
-
-function OversellArticle({
-  article,
-  locale,
-}: {
-  article: Article;
-  locale: Locale;
-}) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const step = article.steps[currentStep];
-  const backLabel = locale === 'zh' ? '返回履歷' : 'Back to resume';
-  const previousLabel = locale === 'zh' ? '上一個流程' : 'Previous flow';
-  const nextLabel = locale === 'zh' ? '下一個流程' : 'Next flow';
-  const riskLabel = locale === 'zh' ? '風險' : 'Risk';
-  const strategyLabel = locale === 'zh' ? '對應策略' : 'Strategy';
-
-  return (
-    <main className="article-shell">
-      <a className="article-back" href={`#/${locale}`}>
-        <ArrowLeft size={16} />
-        {backLabel}
-      </a>
-
-      <article className="article-page">
-        <div className="article-hero">
-          <p className="article-eyebrow">{article.eyebrow}</p>
-          <h1>{article.title}</h1>
-          <p>{article.intro}</p>
-        </div>
-
-        <section className="article-board" aria-label={article.title}>
-          <TicketFlowDiagram currentStep={currentStep} locale={locale} onStepChange={setCurrentStep} steps={article.steps} />
-
-          <div className="article-summary-card">
-            <span>
-              {currentStep + 1} / {article.steps.length}
-            </span>
-            <h2>{step.title}</h2>
-            <p className="article-step-subtitle">{step.subtitle}</p>
-            <p>{step.body}</p>
-
-            <div className="article-callouts">
-              <div>
-                <h3>{riskLabel}</h3>
-                <p>{step.risk}</p>
-              </div>
-              <div>
-                <h3>{strategyLabel}</h3>
-                <p>{step.strategy}</p>
-              </div>
-            </div>
-
-            <ul className="article-notes">
-              {step.notes.map((note) => (
-                <li key={note}>
-                  <CheckCircle2 size={17} />
-                  {note}
-                </li>
-              ))}
-            </ul>
-
-            <div className="article-controls">
-              <button disabled={currentStep === 0} onClick={() => setCurrentStep((value) => value - 1)} type="button">
-                <ArrowLeft size={16} />
-                {previousLabel}
-              </button>
-              <button
-                disabled={currentStep === article.steps.length - 1}
-                onClick={() => setCurrentStep((value) => value + 1)}
-                type="button"
-              >
-                {nextLabel}
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <p className="article-summary">{article.summary}</p>
-      </article>
-    </main>
-  );
 }
 
 function App() {
@@ -171,7 +102,7 @@ function App() {
   }
 
   const toolbarNavItems = activeArticle ? [{ id: 'resume', label: locale === 'zh' ? '履歷' : 'Resume' }] : navItems;
-  const articleReadLabel = locale === 'zh' ? '閱讀內容' : 'Read article';
+  const readLabel = locale === 'zh' ? '閱讀全文' : 'Read article';
 
   return (
     <div className="min-h-screen bg-stone-50 pt-16 text-slate-900">
@@ -244,7 +175,11 @@ function App() {
       </div>
 
       {activeArticle ? (
-        <OversellArticle article={activeArticle} locale={locale} />
+        <Suspense
+          fallback={<div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-400">Loading…</div>}
+        >
+          <OverbookingDashboard onBack={() => { window.location.hash = `/${locale}`; }} />
+        </Suspense>
       ) : (
         <>
       <header className="site-header" id="top">
@@ -322,10 +257,10 @@ function App() {
                   <p>{project.description}</p>
                   {project.href ? (
                     <a href={project.href} rel="noreferrer" target="_blank">
-                      {project.href.replace('https://', '')}
+                      {readLabel}
                     </a>
                   ) : project.articleSlug ? (
-                    <a href={`#/${locale}/articles/${project.articleSlug}`}>{articleReadLabel}</a>
+                    <a href={`#/${locale}/articles/${project.articleSlug}`}>{readLabel}</a>
                   ) : null}
                 </article>
               ))}
@@ -361,10 +296,19 @@ function App() {
           <section className={highlightedSection === 'skills' ? 'sidebar-section-highlight' : ''} id="skills">
             <h2>{resume.labels.skills}</h2>
             <div className="space-y-4">
-              {resume.skills.map((group) => (
+              {resume.skills.map((group, index) => (
                 <div key={group.label}>
                   <h3 className="text-sm font-bold text-slate-950">{group.label}</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">{group.items.join(' / ')}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {group.items.map((item) => (
+                      <span
+                        className={`rounded-md border px-2 py-1 text-xs font-semibold ${SKILL_GROUP_COLORS[index % SKILL_GROUP_COLORS.length]}`}
+                        key={item}
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
