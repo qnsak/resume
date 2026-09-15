@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Github, Globe2, List, Mail, MapPin, Phone, X } from 'lucide-react';
-import { type Locale, resumes } from './data/resume';
+import { ArrowLeft, ArrowRight, CheckCircle2, Github, Globe2, List, Mail, MapPin, Phone, X } from 'lucide-react';
+import { type Article, type Locale, resumes } from './data/resume';
+import { TicketFlowDiagram } from './components/TicketFlowDiagram';
+
+type RouteState = {
+  locale: Locale;
+  articleSlug: string | null;
+};
 
 function detectLocale(): Locale {
   const hash = window.location.hash.toLowerCase();
@@ -12,17 +18,127 @@ function detectLocale(): Locale {
   return navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 }
 
+function parseRoute(): RouteState {
+  const parts = window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  const locale = parts[0] === 'zh' || parts[0] === 'en' ? parts[0] : detectLocale();
+  const articleSlug = parts[1] === 'articles' && parts[2] ? parts[2] : null;
+
+  return { locale, articleSlug };
+}
+
+function OversellArticle({
+  article,
+  locale,
+}: {
+  article: Article;
+  locale: Locale;
+}) {
+  const [currentStep, setCurrentStep] = useState(0);
+  const step = article.steps[currentStep];
+  const backLabel = locale === 'zh' ? '返回履歷' : 'Back to resume';
+  const previousLabel = locale === 'zh' ? '上一個流程' : 'Previous flow';
+  const nextLabel = locale === 'zh' ? '下一個流程' : 'Next flow';
+  const riskLabel = locale === 'zh' ? '風險' : 'Risk';
+  const strategyLabel = locale === 'zh' ? '對應策略' : 'Strategy';
+
+  return (
+    <main className="article-shell">
+      <a className="article-back" href={`#/${locale}`}>
+        <ArrowLeft size={16} />
+        {backLabel}
+      </a>
+
+      <article className="article-page">
+        <div className="article-hero">
+          <p className="article-eyebrow">{article.eyebrow}</p>
+          <h1>{article.title}</h1>
+          <p>{article.intro}</p>
+        </div>
+
+        <section className="article-board" aria-label={article.title}>
+          <TicketFlowDiagram currentStep={currentStep} locale={locale} onStepChange={setCurrentStep} steps={article.steps} />
+
+          <div className="article-summary-card">
+            <span>
+              {currentStep + 1} / {article.steps.length}
+            </span>
+            <h2>{step.title}</h2>
+            <p className="article-step-subtitle">{step.subtitle}</p>
+            <p>{step.body}</p>
+
+            <div className="article-callouts">
+              <div>
+                <h3>{riskLabel}</h3>
+                <p>{step.risk}</p>
+              </div>
+              <div>
+                <h3>{strategyLabel}</h3>
+                <p>{step.strategy}</p>
+              </div>
+            </div>
+
+            <ul className="article-notes">
+              {step.notes.map((note) => (
+                <li key={note}>
+                  <CheckCircle2 size={17} />
+                  {note}
+                </li>
+              ))}
+            </ul>
+
+            <div className="article-controls">
+              <button disabled={currentStep === 0} onClick={() => setCurrentStep((value) => value - 1)} type="button">
+                <ArrowLeft size={16} />
+                {previousLabel}
+              </button>
+              <button
+                disabled={currentStep === article.steps.length - 1}
+                onClick={() => setCurrentStep((value) => value + 1)}
+                type="button"
+              >
+                {nextLabel}
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <p className="article-summary">{article.summary}</p>
+      </article>
+    </main>
+  );
+}
+
 function App() {
-  const [locale, setLocale] = useState<Locale>(detectLocale);
+  const [route, setRoute] = useState<RouteState>(parseRoute);
   const [highlightedSection, setHighlightedSection] = useState<string | null>(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const locale = route.locale;
   const resume = resumes[locale];
+  const activeArticle = route.articleSlug
+    ? resume.articles.find((article) => article.slug === route.articleSlug) ?? null
+    : null;
+
+  useEffect(() => {
+    function syncRoute() {
+      setRoute(parseRoute());
+      setHighlightedSection(null);
+      setIsNavOpen(false);
+      window.scrollTo({ top: 0 });
+    }
+
+    if (!window.location.hash) {
+      window.history.replaceState(null, '', `#/${locale}`);
+    }
+
+    window.addEventListener('hashchange', syncRoute);
+    return () => window.removeEventListener('hashchange', syncRoute);
+  }, [locale]);
 
   useEffect(() => {
     document.documentElement.lang = locale === 'zh' ? 'zh-Hant' : 'en';
-    document.title = `${resume.name} | Resume`;
-    window.history.replaceState(null, '', `#/${locale}`);
-  }, [locale, resume.name]);
+    document.title = activeArticle ? `${activeArticle.title} | ${resume.name}` : `${resume.name} | Resume`;
+  }, [activeArticle, locale, resume.name]);
 
   const navItems = [
     { id: 'top', label: locale === 'zh' ? '首頁' : 'Top' },
@@ -38,6 +154,12 @@ function App() {
     return `section ${highlightedSection === id ? 'section-highlight' : ''}`;
   }
 
+  function switchLocale(nextLocale: Locale) {
+    const articlePath = route.articleSlug ? `/articles/${route.articleSlug}` : '';
+    window.location.hash = `/${nextLocale}${articlePath}`;
+    setIsNavOpen(false);
+  }
+
   function jumpToSection(id: string) {
     const target = document.getElementById(id);
     if (!target) return;
@@ -48,6 +170,9 @@ function App() {
     window.setTimeout(() => setHighlightedSection((current) => (current === id ? null : current)), 1600);
   }
 
+  const toolbarNavItems = activeArticle ? [{ id: 'resume', label: locale === 'zh' ? '履歷' : 'Resume' }] : navItems;
+  const articleReadLabel = locale === 'zh' ? '閱讀內容' : 'Read article';
+
   return (
     <div className="min-h-screen bg-stone-50 pt-16 text-slate-900">
       <div className="top-toolbar">
@@ -56,9 +181,6 @@ function App() {
             <span className="toolbar-name">{resume.name}</span>
             <span className="toolbar-title">{resume.title}</span>
           </div>
-          <div className="toolbar-center" aria-hidden="true">
-            Resume
-          </div>
           <div className="toolbar-actions">
             <div className="language-switch" aria-label="Language switcher">
               <Globe2 size={15} />
@@ -66,8 +188,7 @@ function App() {
                 aria-pressed={locale === 'zh'}
                 className={locale === 'zh' ? 'active' : ''}
                 onClick={() => {
-                  setLocale('zh');
-                  setIsNavOpen(false);
+                  switchLocale('zh');
                 }}
                 type="button"
               >
@@ -77,8 +198,7 @@ function App() {
                 aria-pressed={locale === 'en'}
                 className={locale === 'en' ? 'active' : ''}
                 onClick={() => {
-                  setLocale('en');
-                  setIsNavOpen(false);
+                  switchLocale('en');
                 }}
                 type="button"
               >
@@ -98,11 +218,18 @@ function App() {
               <div className="toolbar-nav-panel">
                 <h2>{resume.labels.navigation}</h2>
                 <nav className="section-nav" aria-label={resume.labels.navigation}>
-                  {navItems.map((item) => (
+                  {toolbarNavItems.map((item) => (
                     <button
                       className={highlightedSection === item.id ? 'active' : ''}
                       key={item.id}
-                      onClick={() => jumpToSection(item.id)}
+                      onClick={() => {
+                        if (item.id === 'resume') {
+                          window.location.hash = `/${locale}`;
+                          return;
+                        }
+
+                        jumpToSection(item.id);
+                      }}
                       type="button"
                     >
                       <span className="section-nav-dot" aria-hidden="true" />
@@ -116,6 +243,10 @@ function App() {
         </div>
       </div>
 
+      {activeArticle ? (
+        <OversellArticle article={activeArticle} locale={locale} />
+      ) : (
+        <>
       <header className="site-header" id="top">
         <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
           <div>
@@ -193,6 +324,8 @@ function App() {
                     <a href={project.href} rel="noreferrer" target="_blank">
                       {project.href.replace('https://', '')}
                     </a>
+                  ) : project.articleSlug ? (
+                    <a href={`#/${locale}/articles/${project.articleSlug}`}>{articleReadLabel}</a>
                   ) : null}
                 </article>
               ))}
@@ -255,6 +388,8 @@ function App() {
           </section>
         </aside>
       </main>
+        </>
+      )}
     </div>
   );
 }

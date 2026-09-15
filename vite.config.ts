@@ -5,4 +5,11 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   base: process.env.GITHUB_REPOSITORY?.endsWith('/resume') ? '/resume/' : '/',
   plugins: [react(), tailwindcss()],
+  server: {
+    hmr: {
+      clientPort: 5173,
+      host: 'localhost',
+      protocol: 'ws',
+    },
+  },
 });
