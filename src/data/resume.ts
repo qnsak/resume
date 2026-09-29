@@ -162,7 +162,7 @@ export const resumes: Record<Locale, ResumeContent> = {
       {
         title: 'Laravel Validation Architecture',
         description: 'Technical writing on validation architecture and maintainable Laravel business rules.',
-        href: 'https://hackmd.io/@qns/B1WG1SAige',
+        articleSlug: 'laravel-reflection-validation',
       },
       {
         title: 'useMutation Pipeline Pattern',
@@ -175,7 +175,7 @@ export const resumes: Record<Locale, ResumeContent> = {
         href: 'https://hackmd.io/@qns/SJnQ57yaWe',
       },
     ],
-    articles: [],
+    articles: [{ slug: 'laravel-reflection-validation', title: 'Laravel Validation Architecture' }],
     education: {
       school: 'National Taitung University',
       degree: 'B.S. in Information Management',
@@ -288,7 +288,7 @@ export const resumes: Record<Locale, ResumeContent> = {
       {
         title: 'Laravel 驗證架構設計',
         description: '整理 Laravel 業務驗證架構與可維護規則設計的技術文章。',
-        href: 'https://hackmd.io/@qns/B1WG1SAige',
+        articleSlug: 'laravel-reflection-validation',
       },
       {
         title: 'React - 以 Pipeline 模式封裝 useMutation 共用流程',
@@ -301,7 +301,7 @@ export const resumes: Record<Locale, ResumeContent> = {
         href: 'https://hackmd.io/@qns/SJnQ57yaWe',
       },
     ],
-    articles: [],
+    articles: [{ slug: 'laravel-reflection-validation', title: 'Laravel 驗證架構設計' }],
     education: {
       school: '國立臺東大學',
       degree: '資訊管理學系 學士',

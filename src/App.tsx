@@ -8,6 +8,12 @@ const OverbookingDashboard = lazy(() =>
   })),
 );
 
+const LaravelReflectionArticle = lazy(() =>
+  import('./components/laravel-reflection/LaravelReflectionArticle').then((module) => ({
+    default: module.LaravelReflectionArticle,
+  })),
+);
+
 const SKILL_GROUP_COLORS = [
   'border-blue-200 bg-blue-50 text-blue-700',
   'border-violet-200 bg-violet-50 text-violet-700',
@@ -178,7 +184,11 @@ function App() {
         <Suspense
           fallback={<div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-400">Loading…</div>}
         >
-          <OverbookingDashboard onBack={() => { window.location.hash = `/${locale}`; }} />
+          {activeArticle.slug === 'laravel-reflection-validation' ? (
+            <LaravelReflectionArticle locale={locale} onBack={() => { window.location.hash = `/${locale}`; }} />
+          ) : (
+            <OverbookingDashboard onBack={() => { window.location.hash = `/${locale}`; }} />
+          )}
         </Suspense>
       ) : (
         <>
