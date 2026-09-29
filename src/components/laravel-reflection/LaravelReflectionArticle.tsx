@@ -76,6 +76,7 @@ class CampaignStatusVerification
 export function LaravelReflectionArticle({ locale, onBack }: { locale: Locale; onBack: () => void }) {
   const t = copy[locale];
   const layers = ['HTTP Layer', 'Application Service', 'Verification Engine', 'Rule Modules'];
+  const articleAsset = (filename: string) => `${import.meta.env.BASE_URL}articles/laravel-reflection/${filename}`;
 
   return (
     <main className="article-page">
@@ -102,14 +103,14 @@ export function LaravelReflectionArticle({ locale, onBack }: { locale: Locale; o
             {layers.map((layer, index) => <div key={layer}><span>{layer}</span>{index < layers.length - 1 ? <ArrowDown size={18} /> : null}</div>)}
           </div>
           <div className="di-note"><GitBranch size={20} /><span>DI Container</span><small>Dependency Inversion</small></div>
-          <figure className="article-figure"><img alt={t.architectureCaption} loading="lazy" src="/articles/laravel-reflection/layered-architecture.jpg" /><figcaption>{t.architectureCaption}</figcaption></figure>
+          <figure className="article-figure"><img alt={t.architectureCaption} loading="lazy" src={articleAsset('layered-architecture.jpg')} /><figcaption>{t.architectureCaption}</figcaption></figure>
         </section>
 
         <section className="article-section">
           <p className="article-kicker">03 · {t.mechanism}</p><h2>{t.mechanismTitle}</h2><p>{t.mechanismBody}</p>
           <div className="article-code-wrap"><div className="code-dots"><i /><i /><i /></div><pre><code>{code}</code></pre></div>
           <p className="article-callout"><Check size={19} />{t.addRule}</p>
-          <figure className="article-figure"><img alt={t.reflectionCaption} loading="lazy" src="/articles/laravel-reflection/reflection-comparison.jpg" /><figcaption>{t.reflectionCaption}</figcaption></figure>
+          <figure className="article-figure"><img alt={t.reflectionCaption} loading="lazy" src={articleAsset('reflection-comparison.jpg')} /><figcaption>{t.reflectionCaption}</figcaption></figure>
           <div className="discovery-grid">
             <div><span>#[Term]</span><h3>{t.attributeTitle}</h3><p>{t.attributeBody}</p></div>
             <div><span>Reflection</span><h3>{t.discoveryTitle}</h3><p>{t.discoveryBody}</p></div>
@@ -129,7 +130,7 @@ export function LaravelReflectionArticle({ locale, onBack }: { locale: Locale; o
           <div><ul>{t.testingItems.map((item) => <li key={item}><TestTube2 size={19} />{item}</li>)}</ul>
             <aside className="aggregate-note"><strong>AggregateValidationException</strong><span>{t.aggregateTitle}</span><p>{t.aggregateBody}</p></aside>
           </div>
-          <figure className="article-figure testing-figure"><img alt={t.testingCaption} loading="lazy" src="/articles/laravel-reflection/testing-boundary.jpg" /><figcaption>{t.testingCaption}</figcaption></figure>
+          <figure className="article-figure testing-figure"><img alt={t.testingCaption} loading="lazy" src={articleAsset('testing-boundary.jpg')} /><figcaption>{t.testingCaption}</figcaption></figure>
         </section>
 
         <section className="article-section">
@@ -138,7 +139,7 @@ export function LaravelReflectionArticle({ locale, onBack }: { locale: Locale; o
             <div className="tradeoff-gain"><h3><Check size={19} />{t.gains}</h3><ul>{t.gainItems.map((item) => <li key={item}>{item}</li>)}</ul></div>
             <div className="tradeoff-cost"><h3><X size={19} />{t.costs}</h3><ul>{t.costItems.map((item) => <li key={item}>{item}</li>)}</ul></div>
           </div>
-          <figure className="article-figure"><img alt={t.tradeoffsCaption} loading="lazy" src="/articles/laravel-reflection/tradeoffs.jpg" /><figcaption>{t.tradeoffsCaption}</figcaption></figure>
+          <figure className="article-figure"><img alt={t.tradeoffsCaption} loading="lazy" src={articleAsset('tradeoffs.jpg')} /><figcaption>{t.tradeoffsCaption}</figcaption></figure>
         </section>
 
         <section className="article-boundary"><p className="article-kicker">07 · Boundary</p><h2>{t.boundary}</h2><p>{t.boundaryBody}</p><blockquote>{t.conclusion}</blockquote></section>
